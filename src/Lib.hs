@@ -35,6 +35,9 @@ data PGN = PGN
 
 parsePGN = maybe [] id . Lazy.maybeResult . (Lazy.parse game)
 
+-- i borrow a lot from https://hackage.haskell.org/package/chesshs here
+-- in terms of parsing the tags and the whole PGN type
+
 game = many1 $ do
   skipSpace
   tags <- fromList <$> many1 tag
