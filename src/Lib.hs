@@ -1,23 +1,26 @@
 module Lib where
 
-import Data.Map (fromList, (!))
-import Data.Maybe (maybe)
-import Control.Applicative ((<|>))
+import           Control.Applicative              ((<|>))
+import           Data.Map                         (fromList, (!))
+import           Data.Maybe                       (maybe)
 
-import Data.Text (Text)
-import qualified Data.Text as T
-import Data.Text.Encoding (decodeLatin1)
+import           Data.Text                        (Text)
+import qualified Data.Text                        as T
+import           Data.Text.Encoding               (decodeLatin1)
+import qualified Data.Text.IO                     as T
 
-import Data.Attoparsec.ByteString.Char8
-import qualified Data.Attoparsec.ByteString.Lazy as Lazy
-import qualified Data.Attoparsec.Text as TextP
+import qualified Data.ByteString.Lazy             as BSL
 
-import Replace.Attoparsec.Text (streamEdit)
+import           Data.Attoparsec.ByteString.Char8
+import qualified Data.Attoparsec.ByteString.Lazy  as Lazy
+import qualified Data.Attoparsec.Text             as TextP
+
+import           Replace.Attoparsec.Text          (streamEdit)
 
 -- https://stackoverflow.com/questions/27236539/what-about-data-attoparsec-bytestring-lazy-char8
 
 
-data PGN = PGN 
+data PGN = PGN
   { site        :: Text
   , date        :: Text
   , whitePlayer :: Text
@@ -32,28 +35,50 @@ data PGN = PGN
   , moves       :: Text
   } deriving Show
 
+run :: (PGN -> PGN) -> IO ()
+run f = do
+    T.putStrLn colNames'
+    f <- BSL.getContents
+    goRec (Lazy.parse game f)
+  where
+    colNames' = colNames <> ",moves"
 
-parsePGN = maybe [] id . Lazy.maybeResult . (Lazy.parse game)
+    goRec :: Lazy.Result PGN -> IO ()
+    goRec (Lazy.Fail _ _ e) = error $ "parser failed: " <> e
+    goRec (Lazy.Done bs pgn) = if (BSL.null bs)
+      then (return ())
+      else do
+        T.putStrLn . formatToCSV . processPGN . f $ pgn
+        goRec (Lazy.parse game bs)
+
+runKeep :: IO ()
+runKeep = run id
+
+runDef :: IO ()
+runDef = run cleanMoves
+
+runCut :: Int -> IO ()
+runCut ncut = run (cutMoves ncut . cleanMoves)
 
 -- i borrow a lot from https://hackage.haskell.org/package/chesshs here
 -- in terms of parsing the tags and the whole PGN type
 
-game = many1 $ do
-  skipSpace
+game = do
   tags <- fromList <$> many1 tag
   skipSpace
   moves <- moveLine
-  return $ PGN (decodeLatin1 $ tags ! "Site") 
-               (decodeLatin1 $ tags ! "Date") 
-               (decodeLatin1 $ tags ! "White") 
-               (decodeLatin1 $ tags ! "Black") 
-               (decodeLatin1 $ tags ! "WhiteElo") 
-               (decodeLatin1 $ tags ! "BlackElo") 
-               (decodeLatin1 $ tags ! "ECO") 
-               (decodeLatin1 $ tags ! "Opening") 
-               (decodeLatin1 $ tags ! "TimeControl") 
-               (decodeLatin1 $ tags ! "Result") 
-               (decodeLatin1 $ tags ! "Termination") 
+  skipSpace
+  return $ PGN (decodeLatin1 $ tags ! "Site")
+               (decodeLatin1 $ tags ! "Date")
+               (decodeLatin1 $ tags ! "White")
+               (decodeLatin1 $ tags ! "Black")
+               (decodeLatin1 $ tags ! "WhiteElo")
+               (decodeLatin1 $ tags ! "BlackElo")
+               (decodeLatin1 $ tags ! "ECO")
+               (decodeLatin1 $ tags ! "Opening")
+               (decodeLatin1 $ tags ! "TimeControl")
+               (decodeLatin1 $ tags ! "Result")
+               (decodeLatin1 $ tags ! "Termination")
                (decodeLatin1 moves)
 
 tag = do
@@ -78,25 +103,25 @@ moveLine = do
     return moves
 
 cleanMoves :: PGN -> PGN
-cleanMoves pgn = 
+cleanMoves pgn =
     pgn { moves = moves' }
   where
     -- parse the move string omitting anything between curly braces {}
     moves' = (T.unwords . init . T.words) $ streamEdit (extraInfo <|> moveNumber) (const "") (moves pgn)
     extraInfo = TextP.char '{' *> TextP.takeTill ((==) '}') <* TextP.char '}'
     moveNumber = do
-        TextP.decimal 
+        TextP.decimal
         (TextP.many1 $ TextP.char '.')
         return ""
 
 cutMoves :: Int -> PGN -> PGN
-cutMoves n pgn = 
+cutMoves n pgn =
     pgn { moves = moves' }
   where
     moves' = T.intercalate "," $ Prelude.take n $ T.words $ moves pgn
 
-processPGN :: PGN -> PGN 
-processPGN pgn = 
+processPGN :: PGN -> PGN
+processPGN pgn =
     pgn { result = result' }
   where
     result' = case result pgn of
@@ -109,5 +134,5 @@ colNames :: Text
 colNames = "site,date,white,black,whiteElo,blackElo,eco,opening,timeControl,result,termination"
 
 formatToCSV :: PGN -> Text
-formatToCSV pgn = 
+formatToCSV pgn =
     site pgn <> "," <> date pgn <> "," <> whitePlayer pgn <> "," <> blackPlayer pgn <> "," <> whiteElo pgn <> "," <> blackElo pgn <> "," <> eco pgn <> "," <> opening pgn <> "," <> timeControl pgn <> "," <> result pgn <> "," <> termination pgn <> "," <> moves pgn
