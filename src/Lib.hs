@@ -35,30 +35,34 @@ data PGN = PGN
   , moves       :: Text
   } deriving Show
 
-run :: (PGN -> PGN) -> IO ()
-run f = do
-    T.putStrLn colNames'
+-- generic function to run the parser from stdin
+run
+  :: (PGN -> PGN) -- optional function to process the PGN before formatting to CSV
+  -> Text -- header line with column names
+  -> Bool -- whether to print the header line
+  -> Text -- separator character as Text
+  -> IO ()
+run f colNames h sep = do
+    if h then T.putStrLn colNames else return ()
     f <- BSL.getContents
     goRec (Lazy.parse game f)
   where
-    colNames' = colNames <> ",moves"
-
     goRec :: Lazy.Result PGN -> IO ()
     goRec (Lazy.Fail _ _ e) = error $ "parser failed: " <> e
     goRec (Lazy.Done bs pgn) = if (BSL.null bs)
       then (return ())
       else do
-        T.putStrLn . formatToCSV . processPGN . f $ pgn
+        T.putStrLn . formatToCSV sep . processPGN . f $ pgn
         goRec (Lazy.parse game bs)
 
-runKeep :: IO ()
-runKeep = run id
+runKeep h sep = run id colNames' h sep
+  where colNames' = (T.intercalate sep colNames) <> sep <> "moves"
 
-runDef :: IO ()
-runDef = run cleanMoves
+runDef h sep = run cleanMoves colNames' h sep
+  where colNames' = (T.intercalate sep colNames) <> sep <> "moves"
 
-runCut :: Int -> IO ()
-runCut ncut = run (cutMoves ncut . cleanMoves)
+runCut ncut h sep = run cleanMoves colNames' h sep
+  where colNames' = T.intercalate sep colNames <> sep <> T.intercalate sep (map (\i -> "move" <> T.pack (show i)) [1..ncut])
 
 -- i borrow a lot from https://hackage.haskell.org/package/chesshs here
 -- in terms of parsing the tags and the whole PGN type
@@ -130,9 +134,9 @@ processPGN pgn =
       "1/2-1/2" -> "0"
       _         -> ""
 
-colNames :: Text
-colNames = "site,date,white,black,whiteElo,blackElo,eco,opening,timeControl,result,termination"
+colNames :: [Text]
+colNames = ["site","date","white","black","whiteElo","blackElo","eco","opening","timeControl","result","termination"]
 
-formatToCSV :: PGN -> Text
-formatToCSV pgn =
-    site pgn <> "," <> date pgn <> "," <> whitePlayer pgn <> "," <> blackPlayer pgn <> "," <> whiteElo pgn <> "," <> blackElo pgn <> "," <> eco pgn <> "," <> opening pgn <> "," <> timeControl pgn <> "," <> result pgn <> "," <> termination pgn <> "," <> moves pgn
+formatToCSV :: Text -> PGN -> Text
+formatToCSV sep pgn =
+    site pgn <> sep <> date pgn <> sep <> whitePlayer pgn <> sep <> blackPlayer pgn <> sep <> whiteElo pgn <> sep <> blackElo pgn <> sep <> eco pgn <> sep <> opening pgn <> sep <> timeControl pgn <> sep <> result pgn <> sep <> termination pgn <> sep <> moves pgn
