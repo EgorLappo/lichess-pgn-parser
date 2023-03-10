@@ -86,6 +86,11 @@ cleanMoves pgn =
         (TextP.many1 $ TextP.char '.')
         return ""
 
+cutMoves :: Int -> PGN -> PGN
+cutMoves n pgn = 
+    pgn { moves = moves' }
+  where
+    moves' = T.intercalate "," $ Prelude.take n $ T.words $ moves pgn
 
 processPGN :: PGN -> PGN 
 processPGN pgn = 
@@ -98,7 +103,7 @@ processPGN pgn =
       _         -> ""
 
 colNames :: Text
-colNames = "site,date,white,black,whiteElo,blackElo,eco,opening,timeControl,result,termination,moves"
+colNames = "site,date,white,black,whiteElo,blackElo,eco,opening,timeControl,result,termination"
 
 formatToCSV :: PGN -> Text
 formatToCSV pgn = 
