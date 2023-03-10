@@ -24,8 +24,8 @@ optionsParser =
      <> header "lichess-pgn-parser. featuring: attoparsec" )
   where
     options = Options <$> 
-      switch ( long "keep" <> short 'k' <> help "keep the move string as-is (e.g. with time, evaluation)" ) <*>
-      option auto ( long "cut" <> short 'c' <> help "cut the move string after n moves, make individual columns" <> value 0 )
+      switch ( long "keep" <> short 'k' <> help "keep the move string as-is (e.g. with time, evaluation data)" ) <*>
+      option auto ( long "cut" <> short 'c' <> help "cut the move string after ARG moves, making individual columns  (default: 0)" <> value 0 )
 
 -- test out the options
 main :: IO ()
@@ -34,8 +34,14 @@ main = do
   let ncut = cut opts
       k = keep opts
 
+  if (ncut > 0) && k then
+    error "cannot use both --keep and --cut"
+  else runParser k ncut
+
+
+runParser k ncut = do
   f <- BSL.getContents
-  let colNames' = if (cut opts) > 0 then colNames <> T.concat (map (\x -> ",move" <> (T.pack $ show x)) [1..(cut opts)]) else colNames <> ",moves"
+  let colNames' = if ncut > 0 then colNames <> T.concat (map (\x -> ",move" <> (T.pack $ show x)) [1..ncut]) else colNames <> ",moves"
 
   T.putStrLn $ colNames'
 
