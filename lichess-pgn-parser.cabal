@@ -1,0 +1,65 @@
+cabal-version: 1.12
+
+-- This file has been generated from package.yaml by hpack version 0.35.1.
+--
+-- see: https://github.com/sol/hpack
+
+name:           lichess-pgn-parser
+version:        0.1.0.0
+description:    Please see the README on GitHub at <https://github.com/EgorLappo/lichess-pgn-parser#readme>
+homepage:       https://github.com/EgorLappo/lichess-pgn-parser#readme
+bug-reports:    https://github.com/EgorLappo/lichess-pgn-parser/issues
+author:         Egor Lappo
+maintainer:     egor@ccrma.stanford.edu
+copyright:      CC-BY
+license:        BSD3
+license-file:   LICENSE
+build-type:     Simple
+extra-source-files:
+    README.md
+
+source-repository head
+  type: git
+  location: https://github.com/EgorLappo/lichess-pgn-parser
+
+library
+  exposed-modules:
+      Lib
+  other-modules:
+      Paths_lichess_pgn_parser
+  hs-source-dirs:
+      src
+  default-extensions:
+      OverloadedStrings
+      BangPatterns
+  ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-export-lists -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints -Wno-unused-do-bind
+  build-depends:
+      attoparsec
+    , base >=4.7 && <5
+    , bytestring
+    , containers
+    , optparse-applicative
+    , replace-attoparsec
+    , text
+  default-language: Haskell2010
+
+executable lichess-pgn-parser-exe
+  main-is: Main.hs
+  other-modules:
+      Paths_lichess_pgn_parser
+  hs-source-dirs:
+      app
+  default-extensions:
+      OverloadedStrings
+      BangPatterns
+  ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-export-lists -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints -Wno-unused-do-bind -threaded -rtsopts -with-rtsopts=-N
+  build-depends:
+      attoparsec
+    , base >=4.7 && <5
+    , bytestring
+    , containers
+    , lichess-pgn-parser
+    , optparse-applicative
+    , replace-attoparsec
+    , text
+  default-language: Haskell2010
