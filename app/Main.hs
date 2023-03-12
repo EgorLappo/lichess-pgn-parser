@@ -27,8 +27,8 @@ optionsParser =
   where
     options = Options <$>
       switch ( long "keep" <> short 'k' <> help "keep the move string as-is (e.g. with time, evaluation data)" ) <*>
-      switch ( long "header" <> short 'h' <> help "print the csv header line" ) <*>
-      option auto ( long "sep" <> short 's' <> help "separator character for output (default: tab)" <> value "\t" ) <*>
+      switch ( long "header" <> short 'n' <> help "print the csv header line (column names)" ) <*>
+      option auto ( long "sep" <> short 's' <> help "separator character for output (default: ,)" <> value "," ) <*>
       option auto ( long "cut" <> short 'c' <> help "cut the move string after ARG moves, making individual columns  (default: 0)" <> value 0 )
 
 -- test out the options

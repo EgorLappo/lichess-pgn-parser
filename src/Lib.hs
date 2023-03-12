@@ -60,7 +60,7 @@ runKeep h sep = run id colNames' h sep
 runDef h sep = run cleanMoves colNames' h sep
   where colNames' = (T.intercalate sep colNames) <> sep <> "moves"
 
-runCut ncut h sep = run cleanMoves colNames' h sep
+runCut ncut h sep = run (cutMoves ncut . cleanMoves) colNames' h sep
   where colNames' = T.intercalate sep colNames <> sep <> T.intercalate sep (map (\i -> "move" <> T.pack (show i)) [1..ncut])
 
 -- i borrow a lot from https://hackage.haskell.org/package/chesshs here
@@ -118,9 +118,12 @@ cleanMoves pgn =
 
 cutMoves :: Int -> PGN -> PGN
 cutMoves n pgn =
-    pgn { moves = moves' }
+    pgn { moves = moves'' }
   where
-    moves' = T.intercalate "," $ Prelude.take n $ T.words $ moves pgn
+    mlist = T.words $ moves pgn
+    l = length mlist
+    moves' = T.intercalate "," $ Prelude.take n $ mlist
+    moves'' = if l >= n then moves' else moves' <> (T.concat $ Prelude.take (n - l) $ repeat ",")
 
 processPGN :: PGN -> PGN
 processPGN pgn =
