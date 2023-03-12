@@ -28,7 +28,6 @@ data PGN = PGN
   , whiteElo    :: Text
   , blackElo    :: Text
   , eco         :: Text
-  , opening     :: Text
   , timeControl :: Text
   , result      :: Text
   , termination :: Text
@@ -73,13 +72,12 @@ game = do
   moves <- moveLine
   skipSpace
   return $ PGN (decodeLatin1 $ tags ! "Site")
-               (decodeLatin1 $ tags ! "Date")
+               (decodeLatin1 $ tags ! "UTCDate")
                (decodeLatin1 $ tags ! "White")
                (decodeLatin1 $ tags ! "Black")
                (decodeLatin1 $ tags ! "WhiteElo")
                (decodeLatin1 $ tags ! "BlackElo")
                (decodeLatin1 $ tags ! "ECO")
-               (decodeLatin1 $ tags ! "Opening")
                (decodeLatin1 $ tags ! "TimeControl")
                (decodeLatin1 $ tags ! "Result")
                (decodeLatin1 $ tags ! "Termination")
@@ -135,8 +133,8 @@ processPGN pgn =
       _         -> ""
 
 colNames :: [Text]
-colNames = ["site","date","white","black","whiteElo","blackElo","eco","opening","timeControl","result","termination"]
+colNames = ["site","date","white","black","whiteElo","blackElo","eco","timeControl","result","termination"]
 
 formatToCSV :: Text -> PGN -> Text
 formatToCSV sep pgn =
-    site pgn <> sep <> date pgn <> sep <> whitePlayer pgn <> sep <> blackPlayer pgn <> sep <> whiteElo pgn <> sep <> blackElo pgn <> sep <> eco pgn <> sep <> opening pgn <> sep <> timeControl pgn <> sep <> result pgn <> sep <> termination pgn <> sep <> moves pgn
+    site pgn <> sep <> date pgn <> sep <> whitePlayer pgn <> sep <> blackPlayer pgn <> sep <> whiteElo pgn <> sep <> blackElo pgn <> sep <> eco pgn <> sep <> timeControl pgn <> sep <> result pgn <> sep <> termination pgn <> sep <> moves pgn
