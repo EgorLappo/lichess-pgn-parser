@@ -57,10 +57,10 @@ run f colNames h sep = do
 runKeep h sep = run id colNames' h sep
   where colNames' = (T.intercalate sep colNames) <> sep <> "moves"
 
-runDef h sep = run cleanMoves colNames' h sep
+runDef h sep = run (cleanMoves 0) colNames' h sep
   where colNames' = (T.intercalate sep colNames) <> sep <> "moves"
 
-runCut ncut h sep = run (cutMoves ncut . cleanMoves) colNames' h sep
+runCut ncut h sep = run (cleanMoves ncut) colNames' h sep
   where colNames' = T.intercalate sep colNames <> sep <> T.intercalate sep (map (\i -> "move" <> T.pack (show i)) [1..ncut])
 
 -- i borrow a lot from https://hackage.haskell.org/package/chesshs here
@@ -104,17 +104,36 @@ moveLine = do
     char '\n'
     return moves
 
-cleanMoves :: PGN -> PGN
-cleanMoves pgn =
+cleanMoves :: Int -> PGN -> PGN
+cleanMoves 0 pgn =
     pgn { moves = moves' }
   where
     -- parse the move string omitting anything between curly braces {}
-    moves' = (T.unwords . init . T.words) $ streamEdit (extraInfo <|> moveNumber) (const "") (moves pgn)
+    moves' = (T.unwords . map stripMarks . init . T.words) $ streamEdit (extraInfo <|> moveNumber) (const "") (moves pgn)
     extraInfo = TextP.char '{' *> TextP.takeTill ((==) '}') <* TextP.char '}'
     moveNumber = do
         TextP.decimal
         (TextP.many1 $ TextP.char '.')
         return ""
+    stripMarks = T.filter (\c -> c /= '?' && c /= '!')
+cleanMoves n pgn =
+    pgn { moves = moves'' }
+  where
+    -- parse the move string omitting anything between curly braces {}
+    mlist = (map stripMarks . init . T.words) $ streamEdit (extraInfo <|> moveNumber) (const "") (moves pgn)
+
+    extraInfo = TextP.char '{' *> TextP.takeTill ((==) '}') <* TextP.char '}'
+    moveNumber = do
+        TextP.decimal
+        (TextP.many1 $ TextP.char '.')
+        return ""
+    stripMarks = T.filter (\c -> c /= '?' && c /= '!')
+
+    l = length mlist
+    moves' = T.intercalate "," $ Prelude.take n $ mlist
+    moves'' = if l >= n then moves' -- case enough moves
+              else if l == 0 then (T.concat $ Prelude.take (n-l-1) $ repeat ",") -- case no moves
+              else moves' <> (T.concat $ Prelude.take (n - l) $ repeat ",") -- case not enough moves
 
 cutMoves :: Int -> PGN -> PGN
 cutMoves n pgn =
@@ -123,7 +142,8 @@ cutMoves n pgn =
     mlist = T.words $ moves pgn
     l = length mlist
     moves' = T.intercalate "," $ Prelude.take n $ mlist
-    moves'' = if l >= n then moves' else moves' <> (T.concat $ Prelude.take (n - l) $ repeat ",")
+    moves'' = if l >= n then moves' else if l == 0 then (T.concat $ Prelude.take (n-l-1) $ repeat ",") else moves' <> (T.concat $ Prelude.take (n - l) $ repeat ",")
+
 
 processPGN :: PGN -> PGN
 processPGN pgn =
