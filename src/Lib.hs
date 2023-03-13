@@ -147,13 +147,19 @@ cutMoves n pgn =
 
 processPGN :: PGN -> PGN
 processPGN pgn =
-    pgn { result = result' }
+    pgn { result = result', whiteElo = whiteElo', blackElo = blackElo' }
   where
     result' = case result pgn of
       "1-0"     -> "1"
       "0-1"     -> "-1"
       "1/2-1/2" -> "0"
       _         -> ""
+    whiteElo' = case whiteElo pgn of
+      "?" -> "0"
+      _   -> whiteElo pgn
+    blackElo' = case blackElo pgn of
+      "?" -> "0"
+      _   -> blackElo pgn
 
 colNames :: [Text]
 colNames = ["site","date","white","black","whiteElo","blackElo","eco","timeControl","result","termination"]
