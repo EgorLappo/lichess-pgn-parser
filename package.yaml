@@ -47,7 +47,7 @@ library:
   source-dirs: src
 
 executables:
-  lichess-pgn-parser-exe:
+  parse:
     main:                Main.hs
     source-dirs:         app
     ghc-options:
