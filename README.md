@@ -13,7 +13,7 @@ There are two mutually incompatible options, `--keep` and `--cut`. Without optio
 ```
 lichess-pgn-parser. featuring: attoparsec
 
-Usage: lichess-pgn-parser-exe [-k|--keep] [-h|--header] 
+Usage: lichess-pgn-parser-exe [-k|--keep] [-n|--header] 
                               [-s|--sep ARG] 
                               [-c|--cut ARG]
 
@@ -23,7 +23,7 @@ Available options:
   -h,--help                Show this help text
   -k,--keep                keep the move string as-is (e.g. with time,
                            evaluation data)
-  -h,--header              print the csv header line
+  -n,--header              print the csv header line
   -s,--sep ARG             separator character for output (default: tab)
   -c,--cut ARG             cut the move string after ARG moves, making
                            individual columns (default: 0)
