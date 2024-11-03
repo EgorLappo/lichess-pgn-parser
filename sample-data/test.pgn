@@ -12,6 +12,7 @@
 [WhiteRatingDiff "-6"]
 [BlackRatingDiff "+6"]
 [ECO "C44"]
+[Variant "Antichess"]
 [Opening "Scotch Game"]
 [TimeControl "300+0"]
 [Termination "Normal"]

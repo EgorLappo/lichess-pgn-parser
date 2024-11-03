@@ -1,7 +1,8 @@
 module Lib where
 
 import           Control.Applicative              ((<|>))
-import           Data.Map                         (fromList, (!))
+import           Data.Map                         ((!))
+import qualified Data.Map                         as M
 import           Data.Maybe                       (maybe)
 
 import           Data.Text                        (Text)
@@ -31,6 +32,7 @@ data PGN = PGN
   , timeControl :: Text
   , result      :: Text
   , termination :: Text
+  , variant     :: Text
   , moves       :: Text
   } deriving Show
 
@@ -67,21 +69,24 @@ runCut ncut h sep = run (cleanMoves ncut) colNames' h sep
 -- in terms of parsing the tags and the whole PGN type
 
 game = do
-  tags <- fromList <$> many1 tag
-  skipSpace
-  moves <- moveLine
-  skipSpace
-  return $ PGN (decodeLatin1 $ tags ! "Site")
-               (decodeLatin1 $ tags ! "UTCDate")
-               (decodeLatin1 $ tags ! "White")
-               (decodeLatin1 $ tags ! "Black")
-               (decodeLatin1 $ tags ! "WhiteElo")
-               (decodeLatin1 $ tags ! "BlackElo")
-               (decodeLatin1 $ tags ! "ECO")
-               (decodeLatin1 $ tags ! "TimeControl")
-               (decodeLatin1 $ tags ! "Result")
-               (decodeLatin1 $ tags ! "Termination")
-               (decodeLatin1 moves)
+    tags <- M.fromList <$> many1 tag
+    skipSpace
+    moves <- moveLine
+    skipSpace
+    return $ PGN (decodeLatin1 $ tags ! "Site")
+                (decodeLatin1 $ tags ! "UTCDate")
+                (decodeLatin1 $ tags ! "White")
+                (decodeLatin1 $ tags ! "Black")
+                (decodeLatin1 $ tags ! "WhiteElo")
+                (decodeLatin1 $ tags ! "BlackElo")
+                (decodeLatin1 $ tags ! "ECO")
+                (decodeLatin1 $ tags ! "TimeControl")
+                (decodeLatin1 $ tags ! "Result")
+                (decodeLatin1 $ tags ! "Termination")
+                (optional tags "Variant")
+                (decodeLatin1 moves)
+  where
+    optional t v = maybe "" decodeLatin1 (M.lookup v t)
 
 tag = do
   skipSpace
@@ -162,8 +167,8 @@ processPGN pgn =
       _   -> blackElo pgn
 
 colNames :: [Text]
-colNames = ["site","date","white","black","whiteElo","blackElo","eco","timeControl","result","termination"]
+colNames = ["site","date","white","black","whiteElo","blackElo","eco","timeControl","result","termination","variant"]
 
 formatToCSV :: Text -> PGN -> Text
 formatToCSV sep pgn =
-    site pgn <> sep <> date pgn <> sep <> whitePlayer pgn <> sep <> blackPlayer pgn <> sep <> whiteElo pgn <> sep <> blackElo pgn <> sep <> eco pgn <> sep <> timeControl pgn <> sep <> result pgn <> sep <> termination pgn <> sep <> moves pgn
+    site pgn <> sep <> date pgn <> sep <> whitePlayer pgn <> sep <> blackPlayer pgn <> sep <> whiteElo pgn <> sep <> blackElo pgn <> sep <> eco pgn <> sep <> timeControl pgn <> sep <> result pgn <> sep <> termination pgn <> sep <> variant pgn <> sep <> moves pgn

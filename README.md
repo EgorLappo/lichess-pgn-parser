@@ -24,7 +24,7 @@ Available options:
   -k,--keep                keep the move string as-is (e.g. with time,
                            evaluation data)
   -n,--header              print the csv header line
-  -s,--sep ARG             separator character for output (default: tab)
+  -s,--sep ARG             separator character for output (default: ,)
   -c,--cut ARG             cut the move string after ARG moves, making
                            individual columns (default: 0)
 ```
