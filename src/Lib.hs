@@ -51,7 +51,8 @@ run f colNames h sep = do
     goRec :: Lazy.Result PGN -> IO ()
     goRec (Lazy.Fail _ _ e) = error $ "parser failed: " <> e
     goRec (Lazy.Done bs pgn) = if (BSL.null bs)
-      then (return ())
+      then do
+        T.putStrLn . formatToCSV sep . processPGN . f $ pgn
       else do
         T.putStrLn . formatToCSV sep . processPGN . f $ pgn
         goRec (Lazy.parse game bs)
