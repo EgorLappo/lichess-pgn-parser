@@ -28,6 +28,8 @@ data PGN = PGN
   , blackPlayer :: Text
   , whiteElo    :: Text
   , blackElo    :: Text
+  , whiteTitle  :: Text
+  , blackTitle  :: Text
   , eco         :: Text
   , timeControl :: Text
   , result      :: Text
@@ -45,8 +47,8 @@ run
   -> IO ()
 run f colNames h sep = do
     if h then T.putStrLn colNames else return ()
-    f <- BSL.getContents
-    goRec (Lazy.parse game f)
+    lines <- BSL.getContents
+    goRec (Lazy.parse game lines)
   where
     goRec :: Lazy.Result PGN -> IO ()
     goRec (Lazy.Fail _ _ e) = error $ "parser failed: " <> e
@@ -72,7 +74,7 @@ runCut ncut h sep = run (cleanMoves ncut) colNames' h sep
 game = do
     tags <- M.fromList <$> many1 tag
     skipSpace
-    moves <- moveLine
+    moves' <- moveLine
     skipSpace
     return $ PGN (decodeLatin1 $ tags ! "Site")
                 (decodeLatin1 $ tags ! "UTCDate")
@@ -80,12 +82,14 @@ game = do
                 (decodeLatin1 $ tags ! "Black")
                 (decodeLatin1 $ tags ! "WhiteElo")
                 (decodeLatin1 $ tags ! "BlackElo")
+                (optional tags "WhiteTitle")
+                (optional tags "BlackTitle")
                 (decodeLatin1 $ tags ! "ECO")
                 (decodeLatin1 $ tags ! "TimeControl")
                 (decodeLatin1 $ tags ! "Result")
                 (decodeLatin1 $ tags ! "Termination")
                 (optional tags "Variant")
-                (decodeLatin1 moves)
+                (decodeLatin1 moves')
   where
     optional t v = maybe "" decodeLatin1 (M.lookup v t)
 
@@ -106,9 +110,9 @@ stringLiteral = do
 
 moveLine = do
     skipSpace
-    moves <- takeTill ((==) '\n')
+    moves' <- takeTill ((==) '\n')
     char '\n'
-    return moves
+    return moves'
 
 cleanMoves :: Int -> PGN -> PGN
 cleanMoves 0 pgn =
