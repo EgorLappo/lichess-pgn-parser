@@ -1,44 +1,53 @@
 {
-  description = "lichess pgn parser";
-
-  # This is a template created by `hix init`
-  inputs.haskellNix.url = "github:input-output-hk/haskell.nix";
-  inputs.nixpkgs.follows = "haskellNix/nixpkgs-unstable";
-  inputs.flake-utils.url = "github:numtide/flake-utils";
-  outputs = { self, nixpkgs, flake-utils, haskellNix }:
-    let
-      supportedSystems =
-        [ "x86_64-linux" "x86_64-darwin" "aarch64-linux" "aarch64-darwin" ];
-    in flake-utils.lib.eachSystem supportedSystems (system:
-      let
-        overlays = [
-          haskellNix.overlay
-          (final: prev: {
-            hixProject = final.haskell-nix.hix.project {
-              src = ./.;
-              evalSystem = "x86_64-linux";
-            };
-          })
-        ];
-        pkgs = import nixpkgs {
-          inherit system overlays;
-          inherit (haskellNix) config;
-        };
-        flake = pkgs.hixProject.flake { };
-      in flake // {
-        legacyPackages = pkgs;
-
-        packages.default = flake.packages."lichess-pgn-parser:exe:parse";
-      });
-
-  # --- Flake Local Nix Configuration ----------------------------
-  nixConfig = {
-    # This sets the flake to use the IOG nix cache.
-    # Nix should ask for permission before using it,
-    # but remove it here if you do not want it to.
-    extra-substituters = [ "https://cache.iog.io" ];
-    extra-trusted-public-keys =
-      [ "hydra.iohk.io:f/Ea+s+dFdN+3Y/G+FDgSq+a5NEWhJGzdjvKNGv0/EQ=" ];
-    allow-import-from-derivation = "true";
+  inputs = {
+    nixpkgs.url = "github:nixos/nixpkgs/nixpkgs-unstable";
+    flake-parts.url = "github:hercules-ci/flake-parts";
+    haskell-flake.url = "github:srid/haskell-flake";
+    nix-github-actions = {
+      url = "github:nix-community/nix-github-actions";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
+  outputs = inputs@{ self, nixpkgs, flake-parts, ... }:
+    flake-parts.lib.mkFlake { inherit inputs; } {
+      systems = nixpkgs.lib.systems.flakeExposed;
+      imports = [ inputs.haskell-flake.flakeModule ];
+
+      debug = true;
+
+      perSystem = { self', ... }: {
+
+        haskellProjects.default = {
+          # basePackages = pkgs.haskellPackages;
+
+          packages = {
+            # aeson.source = "1.5.0.0";      # Override aeson to a custom version from Hackage
+            # shower.source = inputs.shower; # Override shower to a custom source path
+          };
+          settings = {
+            #  aeson = {
+            #    check = false;
+            #  };
+            #  relude = {
+            #    haddock = false;
+            #    broken = false;
+            #  };
+          };
+
+          devShell = {
+            # Enabled by default
+            # enable = true;
+
+            tools = hp: {
+              ormolu = hp.ormolu;
+              hpack = hp.hpack;
+            };
+
+          };
+        };
+
+        # haskell-flake doesn't set the default package, but you can do it here.
+        packages.default = self'.packages.lichess-pgn-parser;
+      };
+    };
 }

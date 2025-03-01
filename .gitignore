@@ -1,5 +1,7 @@
-.stack-work/
+dist*
+.direnv
+stack-work/
 *~
 .DS_Store
 */.DS_Store
-*.cabal
+result*

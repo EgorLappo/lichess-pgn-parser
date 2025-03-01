@@ -42,12 +42,13 @@ ghc-options:
 default-extensions:
 - OverloadedStrings
 - BangPatterns
+language: GHC2021
 
 library:
   source-dirs: src
 
 executables:
-  parse:
+  lichess-pgn-parser:
     main:                Main.hs
     source-dirs:         app
     ghc-options:
