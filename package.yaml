@@ -38,6 +38,7 @@ ghc-options:
 - -Wpartial-fields
 - -Wredundant-constraints
 - -Wno-unused-do-bind
+- -Wno-missing-signatures
 
 default-extensions:
 - OverloadedStrings
